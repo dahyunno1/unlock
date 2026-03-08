@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Lock - PIN Code (Retro UI)</title>
+  <style>
+    /* 구글 폰트 임포트 */
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    :root { 
+      --accent: #0f0; 
+      --bg-side: #0033DA; 
+      --bg-center: #000;
+    }
+    
+    body { 
+      margin: 0; 
+      height: 100vh; 
+      display: flex; 
+      font-family: 'Share Tech Mono', monospace; 
+      overflow: hidden; 
+      background: var(--bg-side);
+      color: white;
+    }
+    
+    #left-pane, #right-pane {
+      flex: 1; 
+      position: relative;
+    }
+
+    /* 좌측 프레임 UI */
+    .phone-icon {
+      position: absolute;
+      top: 50px; left: 50px;
+      width: 60px; height: 120px;
+      background: #f0f0f0;
+      border: 6px solid #222;
+      border-radius: 12px;
+      transform: rotate(-15deg);
+      box-shadow: -15px 15px 0px rgba(0,0,0,0.2);
+    }
+    .phone-icon::before {
+      content: '';
+      position: absolute;
+      top: 10px; left: 4px; right: 4px; bottom: 10px;
+      background: #fff;
+      border-radius: 4px;
+    }
+    .phone-icon::after {
+      content: '';
+      position: absolute;
+      top: -2px; left: 50%; transform: translateX(-50%);
+      width: 20px; height: 5px; background: #222;
+    }
+
+    .left-info {
+      position: absolute;
+      top: 300px;
+      left: 50px;
+      font-size: 16px;
+      font-family: "Gothic A1", sans-serif;
+      letter-spacing: 1px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .brand-logo {
+      position: absolute;
+      bottom: 40px;
+      font-family: sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .left-logo { left: 50px; }
+    .right-logo { right: 50px; }
+
+    .logo-img {
+        width: 160px;
+        height: auto;
+        display: block;
+    }
+
+    .left-back-btn {
+        position: absolute;
+        bottom: 40px;
+        left: 50px;
+
+        background: none;
+        border: 2px solid white;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+
+        font-family: "Geo", sans-serif;
+        font-weight: 400;
+        font-size: 16pt;
+
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none; /* a태그 밑줄 제거 */
+    }
+
+    .left-back-btn:hover {
+    background-color: white;
+    color: #0033DA;
+    }
+
+
+    /* 우측 프레임 UI */
+    .chain-bg {
+      position: absolute;
+      top: -20px; right: -80px;
+      width: 100%; height: 30px;
+      background-image: url("chain_white.svg");
+      transform: rotate(20deg);
+    }
+
+    /* 가운데 프레임 UI */
+    #center-pane { flex: 1.4; padding: 40px 0; box-sizing: border-box; display: flex; }
+
+    .center-wrapper {
+      flex: 1; background: var(--bg-center);
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0px 20px 50px rgba(0,0,0,0.8);
+      border: 1px solid #0f0;
+    }
+
+    /* 상단 헤더 (3단 구성) */
+    #header { 
+      background: #000; 
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: space-between; 
+      padding: 20px;
+      border-bottom: 2px solid #222;
+      z-index: 10; 
+    }
+
+    .header-level { font-size: 20px; width: 120px; color: var(--accent); }
+    .header-center { flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .header-title { font-size: 20px; text-align: center; letter-spacing: 1px; }
+
+    /* 우측 프로그레스 바 (3단계) */
+    .header-progress-wrap { width: 100px; display: flex; justify-content: flex-end; align-items: center; padding-top: 5px; }
+    .progress-bar { display: flex; align-items: center; }
+    .p-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    .p-dot.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .p-line { width: 15px; height: 2px; background: #444; }
+
+
+    #viewport { 
+      flex: 1; 
+      position: relative; 
+      width: 100%; 
+      height: 100%;
+    }
+    #main-canvas { 
+      width: 100%; 
+      height: 100%; 
+      display: block;
+    }
+    
+    #footer { 
+      background: rgba(0, 0, 0, 0.9); 
+      padding: 15px;
+      text-align: center;
+      color: var(--accent); 
+      font-size: 16px; 
+      letter-spacing: 2px;
+      border-top: 1px solid #222;
+    }
+
+    /* 흔들림 */
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  8%   { transform: translateX(-14px); }
+  16%  { transform: translateX(14px); }
+  24%  { transform: translateX(-10px); }
+  32%  { transform: translateX(10px); }
+  40%  { transform: translateX(-6px); }
+  48%  { transform: translateX(6px); }
+  56%  { transform: translateX(-3px); }
+  64%  { transform: translateX(3px); }
+  72%  { transform: translateX(-1px); }
+  80%  { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+/* 빨간 테두리 펄스 */
+@keyframes borderPulse {
+  0%   { box-shadow: 0 0 0px 0px rgba(255,0,0,0); border-color: #0f0; }
+  10%  { box-shadow: 0 0 30px 10px rgba(255,0,0,0.8); border-color: #f00; }
+  30%  { box-shadow: 0 0 60px 20px rgba(255,0,0,0.5); border-color: #f00; }
+  70%  { box-shadow: 0 0 20px 5px rgba(255,0,0,0.3); border-color: #f00; }
+  100% { box-shadow: 0 0 0px 0px rgba(255,0,0,0); border-color: #0f0; }
+}
+
+/* 빨간 플래시 */
+@keyframes flashOverlay {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.35; }
+  30%  { opacity: 0.15; }
+  60%  { opacity: 0.05; }
+  100% { opacity: 0; }
+}
+
+/* 스캔라인 글리치 */
+@keyframes scanNoise {
+  0%   { background-position: 0 0; opacity: 0; }
+  5%   { opacity: 0.15; }
+  50%  { background-position: 0 -200px; opacity: 0.1; }
+  100% { background-position: 0 -400px; opacity: 0; }
+}
+
+.center-wrapper.fail-shake {
+  animation: shake 0.6s ease-out, borderPulse 1.5s ease-out;
+}
+
+#fail-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 0, 0, 0.0);
+  pointer-events: none;
+  z-index: 20;
+  mix-blend-mode: screen;
+}
+#fail-overlay.active {
+  animation: flashOverlay 1.5s ease-out forwards;
+}
+
+#glitch-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 21;
+  opacity: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(255,0,0,0.04) 3px, rgba(255,0,0,0.04) 4px
+  );
+}
+#glitch-overlay.active {
+  animation: scanNoise 1.5s ease-out forwards;
+}
+
+@keyframes warnBlink {
+  0%, 100% { opacity: 1; color: red; }
+  50%       { opacity: 0.3; color: #ff6666; }
+}
+#status-txt.fail-blink {
+  animation: warnBlink 0.25s ease-in-out 6;
+}
+
+#reset-warning {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  font-size: 18px;
+  color: #f00;
+  letter-spacing: 3px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  text-shadow: 0 0 20px #f00, 0 0 40px #f00;
+}
+@keyframes warningAppear {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  80%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+#reset-warning.active {
+  animation: warningAppear 1.5s ease forwards;
+}
+    
+    video { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="left-pane">
+    <div class="phone-icon"></div>
+    <div class="left-info">
+        <div style="color: #0f0; font-family: 'Geo', sans-serif; font-size: 20pt;">Enter PIN to Unlock</div><br>
+        키패드에 손가락을 드래그하여<br>
+        PIN 암호를 풀어보세요!<br>
+        힌트를 참고하시면 됩니다.<br>
+        설마.. 비밀번호를 잊지는 않았겠죠?
+      </div>
+    <a href="index.html" class="left-back-btn">← BACK</a>
+  </div>
+  
+  <div id="center-pane">
+    <div class="center-wrapper" id="center-wrapper">
+        <div id="fail-overlay"></div>
+        <div id="glitch-overlay"></div>
+        <div id="reset-warning">⚠ ACCESS DENIED<br><span style="font-size:13px; letter-spacing:2px;">RESETTING TO LEVEL 1</span></div>
+        <div id="header">
+            <div class="header-level" id="level-txt">Level 1</div>
+            <div class="header-center">
+                <div class="header-title" id="stage-title">MISSION: PASSCODE</div>
+                <div id="stage-hint" style="font-size: 12px; color: #666;">HINT: 로딩중...</div>
+            </div>
+            <div class="header-progress-wrap">
+              <div class="progress-bar">
+                <div class="p-dot" id="dot-1"></div>
+                <div class="p-line"></div>
+                <div class="p-dot" id="dot-2"></div>
+                <div class="p-line"></div>
+                <div class="p-dot" id="dot-3"></div>
+              </div>
+            </div>
+        </div>
+      
+      <div id="viewport">
+        <canvas id="main-canvas"></canvas>
+        <div id="footer">STATUS: <span id="status-txt">WAITING FOR INPUT...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="right-pane">
+    <div class="chain-bg"></div>
+    <div class="brand-logo right-logo">
+        <img src="logo_white.svg" class="logo-img">
+    </div>
+  </div>
+
+  <video id="video" playsinline></video>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+  <script>
+    const mCanvas = document.getElementById('main-canvas');
+    const mCtx = mCanvas.getContext('2d');
+    const video = document.getElementById('video');
+    const statusTxt = document.getElementById('status-txt');
+    const levelTxt = document.getElementById('level-txt');
+    const headerTitle = document.getElementById('stage-title');
+    const stageHint = document.getElementById('stage-hint');
+    const centerWrapper = document.getElementById('center-wrapper');
+    const failOverlay = document.getElementById('fail-overlay');
+    const glitchOverlay = document.getElementById('glitch-overlay');
+    const resetWarning = document.getElementById('reset-warning');
+
+    function getTodayPin() {
+    const today = new Date();
+    // getMonth()는 0부터 시작하므로 1을 더해줍니다.
+    const month = String(today.getMonth() + 1).padStart(2, '0'); 
+    const day = String(today.getDate()).padStart(2, '0');
+    
+    return month + day; // 예: 3월 4일이면 "0304" 반환
+}
+
+    const LEVEL_CONFIGS = [
+      { level: 1, digits: 4, pin: getTodayPin(), hint: "오늘의 날짜 4자리", mode: "normal", time: 30 },
+      { level: 2, digits: 4, pin: "0000", hint: "내가 가장 자주 사용하는 숫자는?", mode: "shuffle", time: 35 },
+      { level: 3, digits: 8, pin: "38472948", hint: "보안이 강화되었습니다. 8자리 식별 코드를 입력하세요.", mode: "float", time: 45 } 
+    ];
+
+    let currentLevel = 1;
+    let pinInput = "";
+    let hoverTarget = null;
+    let hoverStartTime = 0;
+    const HOVER_DURATION = 1500; 
+    let timeLeft = 0; 
+    let globalTimer = null;
+    let isGameOver = false;
+    let activePad = []; 
+    const btnRadius = 35;
+
+    function init() {
+      mCanvas.width = mCanvas.clientWidth;
+      mCanvas.height = mCanvas.clientHeight;
+      startGame();
+    }
+
+    function initPad(mode, cW, cH) {
+      const basePad = [
+        { id: '1', row: 0, col: 0 }, { id: '2', row: 0, col: 1 }, { id: '3', row: 0, col: 2 },
+        { id: '4', row: 1, col: 0 }, { id: '5', row: 1, col: 1 }, { id: '6', row: 1, col: 2 },
+        { id: '7', row: 2, col: 0 }, { id: '8', row: 2, col: 1 }, { id: '9', row: 2, col: 2 },
+        { id: '0', row: 3, col: 1 }
+      ];
+      
+      if (mode === "normal") {
+        activePad = JSON.parse(JSON.stringify(basePad));
+      } else if (mode === "shuffle") {
+        const positions = [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:3,c:1}];
+        for (let i = positions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        activePad = basePad.map((btn, idx) => ({ ...btn, row: positions[idx].r, col: positions[idx].c }));
+      } else if (mode === "float") {
+        activePad = basePad.map(btn => ({
+          ...btn,
+          cx: btnRadius + Math.random() * (cW - btnRadius * 2),
+          cy: (cH * 0.35) + btnRadius + Math.random() * (cH * 0.65 - btnRadius * 2),
+          vx: (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random() * 2),
+          vy: (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random() * 2)
+        }));
+      }
+    }
+
+    function triggerFailEffect() {
+        centerWrapper.classList.remove('fail-shake');
+        void centerWrapper.offsetWidth;
+        centerWrapper.classList.add('fail-shake');
+
+        failOverlay.classList.remove('active');
+        void failOverlay.offsetWidth;
+        failOverlay.classList.add('active');
+
+        glitchOverlay.classList.remove('active');
+        void glitchOverlay.offsetWidth;
+        glitchOverlay.classList.add('active');
+
+        statusTxt.classList.remove('fail-blink');
+        void statusTxt.offsetWidth;
+        statusTxt.classList.add('fail-blink');
+
+        resetWarning.classList.remove('active');
+        void resetWarning.offsetWidth;
+        resetWarning.classList.add('active');
+
+        setTimeout(() => {
+            centerWrapper.classList.remove('fail-shake');
+            failOverlay.classList.remove('active');
+            glitchOverlay.classList.remove('active');
+            statusTxt.classList.remove('fail-blink');
+            resetWarning.classList.remove('active');
+        }, 1600);
+        }
+
+    function updateHeaderUI() {
+        const config = LEVEL_CONFIGS[currentLevel - 1]; // 현재 레벨 설정 가져오기
+        
+        levelTxt.innerText = "Level " + currentLevel;
+        headerTitle.innerText = "MISSION: PASSCODE";
+        stageHint.innerText = `HINT: ${config.hint}`; // 💡 HTML에 힌트 텍스트 쏘아주기!
+
+        document.getElementById('dot-1').className = currentLevel >= 1 ? "p-dot active" : "p-dot";
+        document.getElementById('dot-2').className = currentLevel >= 2 ? "p-dot active" : "p-dot";
+        document.getElementById('dot-3').className = currentLevel >= 3 ? "p-dot active" : "p-dot";
+    }
+
+    function startGame() {
+      const config = LEVEL_CONFIGS[currentLevel - 1];
+      pinInput = "";
+      timeLeft = config.time;
+      isGameOver = false;
+      hoverTarget = null;
+      
+      updateHeaderUI();
+      statusTxt.innerText = `TIME LEFT: ${timeLeft}s`;
+      statusTxt.style.color = "#fff";
+      
+      initPad(config.mode, mCanvas.width, mCanvas.height);
+      
+      if (globalTimer) clearInterval(globalTimer);
+      globalTimer = setInterval(() => {
+        if (isGameOver) return;
+        timeLeft--;
+        statusTxt.innerText = `TIME LEFT: ${timeLeft}s`;
+        if (timeLeft <= 5) statusTxt.style.color = "#f00";
+        if (timeLeft <= 0) showMessageAndRestart("TIME OVER!", "#f00", 2000, false);
+      }, 1000); 
+    }
+
+    function showMessageAndRestart(msg, color, delay, isNextLevel) {
+        isGameOver = true; // 게임 일시 정지 (입력 차단)
+        clearInterval(globalTimer);
+        
+        // 1. 메시지만 먼저 보여줍니다. (아직 레벨은 올리지 않음!)
+        if (!isNextLevel) {
+            triggerFailEffect();
+            statusTxt.innerText = msg + " - RESET TO LEVEL 1!"; 
+        } else {
+            statusTxt.innerText = msg;
+        }
+        statusTxt.style.color = color;
+        
+        // 2. 딜레이(2초)가 지난 "후에" 레벨을 변경하고 화면을 리셋합니다.
+        setTimeout(() => {
+            // 여기서 레벨을 변경합니다!
+            if (!isNextLevel) {
+            currentLevel = 1; // 실패 시 1단계로 강등
+            } else {
+            currentLevel++;   // 성공 시 다음 단계로 업그레이드
+            }
+
+            // 변경된 레벨에 맞춰 게임을 다시 세팅합니다.
+            if (currentLevel > 3) {
+            headerTitle.innerText = "SYSTEM UNLOCKED";
+            statusTxt.innerText = "ACCESS GRANTED.";
+            statusTxt.style.color = "#0f0";
+            mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height); 
+            } else {
+            startGame(); // 바뀐 레벨(3단계)의 설정으로 게임 시작 (이때 점 8개로 바뀜)
+            }
+        }, delay);
+    }
+
+    function drawUI(ctx, cW, cH) {
+      const config = LEVEL_CONFIGS[currentLevel - 1];
+      ctx.textAlign = "center";
+      ctx.font = "16px 'Share Tech Mono'";
+    
+      const dotRadius = 6, dotSpacing = 30;
+      const startX = (cW - (dotSpacing * (config.digits - 1))) / 2;
+      const dotY = cH * 0.25;
+
+      for (let i = 0; i < config.digits; i++) {
+        ctx.beginPath();
+        ctx.arc(startX + (i * dotSpacing), dotY, dotRadius, 0, Math.PI * 2);
+        if (i < pinInput.length) { ctx.fillStyle = "#fff"; ctx.fill(); }
+        else { ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke(); }
+      }
+
+      const stepX = btnRadius * 3.0, stepY = btnRadius * 3.0;
+      const padStartX = cW / 2 - stepX, padStartY = cH * 0.38;
+
+      activePad.forEach(btn => {
+        if (config.mode !== "float") {
+          btn.cx = padStartX + (btn.col * stepX);
+          btn.cy = padStartY + (btn.row * stepY);
+        } else {
+          if (!isGameOver) { btn.cx += btn.vx; btn.cy += btn.vy; }
+          if (btn.cx - btnRadius < 0 || btn.cx + btnRadius > cW) btn.vx *= -1;
+          if (btn.cy - btnRadius < cH * 0.35 || btn.cy + btnRadius > cH) btn.vy *= -1;
+        }
+        btn.r = btnRadius;
+        ctx.beginPath();
+        ctx.arc(btn.cx, btn.cy, btnRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.stroke();
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "32px 'Share Tech Mono'";
+        ctx.textBaseline = "middle";
+        ctx.fillText(btn.id, btn.cx, btn.cy);
+      });
+      return activePad;
+    }
+
+    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+
+    hands.onResults((results) => {
+      if (!results.image) return;
+      const vW = results.image.width; const vH = results.image.height;
+      const cW = mCanvas.width; const cH = mCanvas.height;
+      
+      const vRatio = vW / vH; const cRatio = cW / cH;
+      let sW, sH, sx, sy;
+      if (vRatio > cRatio) { sH = vH; sW = vH * cRatio; sx = (vW - sW) / 2; sy = 0; }
+      else { sW = vW; sH = vW / cRatio; sx = 0; sy = (vH - sH) / 2; }
+      
+      mCtx.save();
+      mCtx.clearRect(0, 0, cW, cH);
+      mCtx.translate(cW, 0); mCtx.scale(-1, 1);
+      mCtx.globalAlpha = 0.5; 
+      mCtx.drawImage(results.image, sx, sy, sW, sH, 0, 0, cW, cH);
+      mCtx.globalAlpha = 1.0;
+      mCtx.restore(); 
+
+      if (currentLevel > 3) return; 
+      const btnData = drawUI(mCtx, cW, cH);
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const tip = results.multiHandLandmarks[0][8]; 
+        const realX = cW - (((tip.x * vW) - sx) * (cW / sW));
+        const realY = ((tip.y * vH) - sy) * (cH / sH);
+
+        if (!isGameOver) {
+          let currentHover = null;
+          for (let btn of btnData) {
+            if (Math.hypot(btn.cx - realX, btn.cy - realY) < btn.r) { currentHover = btn; break; }
+          }
+          if (currentHover) {
+            if (hoverTarget !== currentHover.id) { hoverTarget = currentHover.id; hoverStartTime = Date.now(); }
+            else {
+              let elapsed = Date.now() - hoverStartTime;
+              let progress = Math.min(elapsed / HOVER_DURATION, 1);
+              mCtx.beginPath();
+              mCtx.arc(currentHover.cx, currentHover.cy, currentHover.r + 5, -Math.PI/2, (-Math.PI/2) + (Math.PI * 2 * progress));
+              mCtx.strokeStyle = "#0f0"; mCtx.lineWidth = 5; mCtx.stroke();
+              if (progress >= 1) {
+                pinInput += currentHover.id;
+                const config = LEVEL_CONFIGS[currentLevel - 1];
+                if (config.mode !== "normal" && pinInput.length < config.digits) initPad(config.mode, cW, cH);
+                hoverTarget = null; hoverStartTime = Date.now() + 500;
+                if (pinInput.length === config.digits) {
+                  if (pinInput === config.pin) showMessageAndRestart(`LEVEL ${currentLevel} CLEARED!`, "#0f0", 2000, true);
+                  else showMessageAndRestart("WRONG PASSCODE!", "#f00", 2000, false);
+                }
+              }
+            }
+          } else { hoverTarget = null; }
+        }
+        mCtx.beginPath(); mCtx.arc(realX, realY, 8, 0, Math.PI * 2);
+        mCtx.fillStyle = "#fff"; mCtx.fill();
+        mCtx.lineWidth = 3; mCtx.strokeStyle = "#0f0"; mCtx.stroke();
+      } else { hoverTarget = null; }
+    });
+
+    // 실패했을 때(오답 혹은 시간초과) 호출하는 함수
+    function triggerSecurityReset(message) {
+    isGameOver = true; // 게임 상태 정지
+    clearInterval(globalTimer); // 타이머 중지
+    
+    // UI 경고 표시
+    statusTxt.innerText = `${message} - RESET TO LEVEL 1!`;
+    statusTxt.style.color = "#ff0000";
+    
+    // 1.5~2초 뒤에 1단계로 초기화하여 재시작
+    setTimeout(() => {
+        currentLevel = 1; // 무조건 1단계로 강등
+        userInput = "";   // 입력 데이터 초기화
+        
+        // UI 업데이트 함수들 (필요에 따라 호출)
+        updateLevelUI(); 
+        startGame(); 
+    }, 2000);
+    }
+
+    function checkPin() {
+  const config = LEVEL_CONFIGS[currentLevel - 1];
+  
+  if (userInput === config.pin) {
+    // [성공] 다음 레벨로
+    statusTxt.innerText = "ACCESS GRANTED";
+    statusTxt.style.color = "#0f0";
+    
+    setTimeout(() => {
+      currentLevel++;
+      if (currentLevel > 3) {
+        statusTxt.innerText = "SYSTEM FULLY UNLOCKED";
+      } else {
+        startGame();
+      }
+    }, 1500);
+  } else {
+    // [실패] 🔴 무조건 1단계로 리셋!
+    triggerSecurityReset("WRONG PIN");
+  }
+}
+
+    const camera = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 640, height: 480 });
+    camera.start().then(init);
+    window.addEventListener('resize', () => { mCanvas.width = mCanvas.clientWidth; mCanvas.height = mCanvas.clientHeight; });
+  </script>
+</body>
+</html>

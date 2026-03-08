@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Lock - Skeleton Match (Retro UI)</title>
+  <style>
+    /* 구글 폰트 임포트 */
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    :root { 
+      --accent: #0f0; 
+      --bg-side: #0033DA;
+      --bg-center: #000;
+    }
+    
+    body { 
+      margin: 0; 
+      height: 100vh; 
+      display: flex; 
+      font-family: 'Share Tech Mono', monospace; 
+      overflow: hidden; 
+      background: var(--bg-side);
+      color: white;
+    }
+    
+    #left-pane, #right-pane {
+      flex: 1; 
+      position: relative;
+    }
+
+    /* 좌측 프레임 UI */
+    .scan-line {
+      position: absolute;
+      top: 50px; left: 50px;
+      width: 100px; height: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 15px var(--accent);
+      animation: scan 3s infinite ease-in-out;
+    }
+    @keyframes scan {
+      0%, 100% { top: 50px; }
+      50% { top: 250px; }
+    }
+
+    .left-info {
+      position: absolute;
+      top: 300px;
+      left: 50px;
+      font-size: 16px;
+      font-family: "Gothic A1", sans-serif;
+      letter-spacing: 1px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .brand-logo {
+      position: absolute;
+      bottom: 40px;
+      font-family: sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .left-logo { left: 50px; }
+    .right-logo { right: 50px; }
+
+    .logo-img {
+      width: 160px;     /* 크기 조절 */
+      height: auto;
+      display: block;
+    }
+
+    .left-back-btn {
+        position: absolute;
+        bottom: 40px;
+        left: 50px;
+
+        background: none;
+        border: 2px solid white;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+
+        font-family: "Geo", sans-serif;
+        font-weight: 400;
+        font-size: 16pt;
+
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none; /* a태그 밑줄 제거 */
+    }
+
+    .left-back-btn:hover {
+      background-color: white;
+      color: #0033DA;
+    }
+
+    /* 우측 프레임 UI */
+    .chain-bg {
+      position: absolute;
+      top: -20px; right: -80px;
+      width: 100%; height: 30px;
+      background-image: url("chain_white.svg");
+      transform: rotate(20deg);
+    }
+
+    /* 가운데 프레임 UI */
+    #center-pane {
+      flex: 1.6; 
+      padding: 40px 0; 
+      box-sizing: border-box;
+      display: flex;
+    }
+
+    .center-wrapper {
+      flex: 1;
+      background: var(--bg-center);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden; 
+      box-shadow: 0px 20px 50px rgba(0,0,0,0.8);
+      border: 1px solid #0f0;
+    }
+
+    /* 상단 헤더 (3단 구성) */
+    #header { 
+      background: #000; 
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: space-between; 
+      padding: 20px;
+      border-bottom: 2px solid #222;
+      z-index: 10; 
+    }
+
+    .header-level { font-size: 20px; width: 120px; color: var(--accent); }
+    .header-center { flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .header-title { font-size: 20px; text-align: center; letter-spacing: 1px; }
+
+    /* 우측 프로그레스 바 (3단계) */
+    .header-progress-wrap { width: 100px; display: flex; justify-content: flex-end; align-items: center; padding-top: 5px; }
+    .progress-bar { display: flex; align-items: center; }
+    .p-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    .p-dot.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .p-line { width: 15px; height: 2px; background: #444; }
+    
+    #viewport { 
+      flex: 1; 
+      position: relative; 
+      width: 100%; 
+      height: 100%;
+    }
+    #main-canvas { 
+      width: 100%; 
+      height: 100%; 
+      display: block;
+    }
+    
+    #footer { 
+      background: rgba(0, 0, 0, 0.9); 
+      padding: 15px;
+      text-align: center;
+      color: var(--accent); 
+      font-size: 16px; 
+      letter-spacing: 2px;
+      border-top: 1px solid #222;
+    }
+    
+    video { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="left-pane">
+    <div class="scan-line"></div>
+    <div class="left-info">
+      <div style="color: #0f0; font-family: 'Geo', sans-serif; font-size: 20pt;">Gesture to Unlock</div><br>
+      실루엣을 따라 손동작을 바꿔가며<br>
+      잠금해제를 시도하세요!<br>
+      관절 포인트 하나하나를 잘 맞추는 것이<br>
+      굉장히 중요합니다.<br>
+    </div>
+    <a href="index.html" class="left-back-btn">← BACK</a>
+  </div>
+  
+  <div id="center-pane">
+    <div class="center-wrapper">
+      <div id="header">
+        <div class="header-level" id="level-txt">Level 1</div>
+        <div class="header-center">
+            <div class="header-title" id="stage-title">MISSION: GESTURE</div>
+            <div style="font-size: 12px; color: #666;">손동작으로 잠금해제!</div>
+        </div>
+        <div class="header-progress-wrap">
+          <div class="progress-bar">
+            <div class="p-dot" id="dot-1"></div>
+            <div class="p-line"></div>
+            <div class="p-dot" id="dot-2"></div>
+            <div class="p-line"></div>
+            <div class="p-dot" id="dot-3"></div>
+          </div>
+        </div>
+    </div>
+      
+      <div id="viewport">
+        <canvas id="main-canvas"></canvas>
+      </div>
+      <div id="footer">STATUS: <span id="status-txt">READY TO SCAN</span></div>
+    </div>
+  </div>
+
+  <div id="right-pane">
+    <div class="chain-bg"></div>
+    <div class="brand-logo right-logo">
+        <img src="logo_white.svg" class="logo-img">
+    </div>
+  </div>
+
+  <video id="video" playsinline></video>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+  <script>
+    const mCanvas = document.getElementById('main-canvas');
+    const mCtx = mCanvas.getContext('2d');
+    const video = document.getElementById('video');
+    const statusTxt = document.getElementById('status-txt');
+    const levelTxt = document.getElementById('level-txt');
+    const headerTitle = document.getElementById('stage-title');
+
+    let currentStage = 1;
+    let isTransitioning = false;
+    let matchStartTime = 0;
+    const HOLD_DURATION = 1500; 
+
+    const CONNECTIONS = [
+      [0,1], [1,2], [2,3], [3,4], [0,5], [5,6], [6,7], [7,8], 
+      [5,9], [9,10], [10,11], [11,12], [9,13], [13,14], [14,15], [15,16], 
+      [13,17], [0,17], [17,18], [18,19], [19,20]
+    ];
+
+    function init() {
+      mCanvas.width = mCanvas.clientWidth;
+      mCanvas.height = mCanvas.clientHeight;
+      updateHeaderUI();
+    }
+
+    function getStageConfig() {
+      if (currentStage === 1) return { threshold: 60, reqMatch: 15, title: "OPEN PALM SCAN", total: 21 };
+      else if (currentStage === 2) return { threshold: 45, reqMatch: 18, title: "ROCK & ROLL VERIFY", total: 21 };
+      else return { threshold: 40, reqMatch: 36, title: "DUAL HANDS OVERRIDE", total: 42 }; 
+    }
+
+    function updateHeaderUI() {
+      const config = getStageConfig();
+      levelTxt.innerText = "LEVEL " + currentStage;
+      headerTitle.innerText = config.title;
+      document.getElementById('dot-1').className = currentStage >= 1 ? "p-dot active" : "p-dot";
+      document.getElementById('dot-2').className = currentStage >= 2 ? "p-dot active" : "p-dot";
+      document.getElementById('dot-3').className = currentStage >= 3 ? "p-dot active" : "p-dot";
+    }
+
+    function createPose(cx, cy, s, type, mirror = 1) {
+      const m = mirror;
+      if (type === 'open') {
+        return [
+          {x: cx, y: cy + s*1.0},
+          {x: cx - s*0.4*m, y: cy + s*0.6}, {x: cx - s*0.8*m, y: cy + s*0.3}, {x: cx - s*1.1*m, y: cy + s*0.1}, {x: cx - s*1.3*m, y: cy - s*0.1}, 
+          {x: cx - s*0.3*m, y: cy + s*0.1}, {x: cx - s*0.4*m, y: cy - s*0.4}, {x: cx - s*0.5*m, y: cy - s*0.9}, {x: cx - s*0.6*m, y: cy - s*1.3}, 
+          {x: cx, y: cy}, {x: cx, y: cy - s*0.5}, {x: cx, y: cy - s*1.0}, {x: cx, y: cy - s*1.5}, 
+          {x: cx + s*0.3*m, y: cy + s*0.1}, {x: cx + s*0.4*m, y: cy - s*0.4}, {x: cx + s*0.5*m, y: cy - s*0.9}, {x: cx + s*0.6*m, y: cy - s*1.3}, 
+          {x: cx + s*0.6*m, y: cy + s*0.2}, {x: cx + s*0.8*m, y: cy - s*0.2}, {x: cx + s*0.9*m, y: cy - s*0.6}, {x: cx + s*1.0*m, y: cy - s*1.0}  
+        ];
+      } else if (type === 'rock') {
+        return [
+          {x: cx, y: cy + s*1.0},
+          {x: cx - s*0.4*m, y: cy + s*0.6}, {x: cx - s*0.8*m, y: cy + s*0.3}, {x: cx - s*1.1*m, y: cy + s*0.1}, {x: cx - s*1.3*m, y: cy - s*0.1}, 
+          {x: cx - s*0.3*m, y: cy + s*0.1}, {x: cx - s*0.4*m, y: cy - s*0.4}, {x: cx - s*0.5*m, y: cy - s*0.9}, {x: cx - s*0.6*m, y: cy - s*1.3}, 
+          {x: cx, y: cy}, {x: cx, y: cy + s*0.4}, {x: cx, y: cy + s*0.6}, {x: cx, y: cy + s*0.7}, 
+          {x: cx + s*0.3*m, y: cy}, {x: cx + s*0.3*m, y: cy + s*0.4}, {x: cx + s*0.3*m, y: cy + s*0.6}, {x: cx + s*0.3*m, y: cy + s*0.7}, 
+          {x: cx + s*0.6*m, y: cy + s*0.2}, {x: cx + s*0.8*m, y: cy - s*0.2}, {x: cx + s*0.9*m, y: cy - s*0.6}, {x: cx + s*1.0*m, y: cy - s*1.0}  
+        ];
+      } else if (type === 'bizarre') {
+        return [
+          {x: cx, y: cy + s*1.0},
+          {x: cx - s*0.4*m, y: cy + s*0.6}, {x: cx - s*0.8*m, y: cy + s*0.3}, {x: cx - s*1.1*m, y: cy + s*0.1}, {x: cx - s*1.3*m, y: cy - s*0.1}, 
+          {x: cx - s*0.3*m, y: cy + s*0.1}, {x: cx - s*0.5*m, y: cy - s*0.4}, {x: cx - s*0.7*m, y: cy - s*0.8}, {x: cx - s*0.9*m, y: cy - s*1.2}, 
+          {x: cx, y: cy}, {x: cx, y: cy + s*0.4}, {x: cx, y: cy + s*0.6}, {x: cx, y: cy + s*0.7}, 
+          {x: cx + s*0.3*m, y: cy}, {x: cx + s*0.5*m, y: cy - s*0.4}, {x: cx + s*0.7*m, y: cy - s*0.8}, {x: cx + s*0.9*m, y: cy - s*1.2}, 
+          {x: cx + s*0.4*m, y: cy + s*0.2}, {x: cx + s*0.3*m, y: cy + s*0.5}, {x: cx + s*0.2*m, y: cy + s*0.6}, {x: cx + s*0.1*m, y: cy + s*0.7}  
+        ];
+      }
+    }
+
+    function getTargetPoses(cW, cH) {
+      const cx = cW / 2, cy = cH / 2 + 50;
+      if (currentStage === 1) return [ createPose(cx, cy, Math.min(cW, cH) / 4.5, 'open', 1) ];
+      else if (currentStage === 2) return [ createPose(cx, cy, Math.min(cW, cH) / 4.5, 'rock', 1) ];
+      else {
+        const s = Math.min(cW, cH) / 5.5; 
+        return [ createPose(cx - s * 1.8, cy, s, 'open', -1), createPose(cx + s * 1.8, cy, s, 'bizarre', 1) ];
+      }
+    }
+
+    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+
+    hands.onResults((results) => {
+      if (!results.image) return;
+      const vW = results.image.width, vH = results.image.height;
+      const cW = mCanvas.width, cH = mCanvas.height;
+      
+      const vRatio = vW / vH, cRatio = cW / cH;
+      let sW, sH, sx, sy;
+      if (vRatio > cRatio) { sH = vH; sW = vH * cRatio; sx = (vW - sW) / 2; sy = 0; }
+      else { sW = vW; sH = vW / cRatio; sx = 0; sy = (vH - sH) / 2; }
+      
+      mCtx.save();
+      mCtx.clearRect(0, 0, cW, cH);
+      mCtx.translate(cW, 0); mCtx.scale(-1, 1);
+      mCtx.globalAlpha = 0.5; 
+      mCtx.drawImage(results.image, sx, sy, sW, sH, 0, 0, cW, cH);
+      mCtx.globalAlpha = 1.0;
+      mCtx.restore(); 
+
+      if (currentStage > 3 || isTransitioning) return;
+
+      const config = getStageConfig();
+      const targetPoses = getTargetPoses(cW, cH);
+
+      let userHands = [];
+      if (results.multiHandLandmarks) {
+        for (let lms of results.multiHandLandmarks) {
+          let pts = [];
+          for (let i = 0; i < 21; i++) {
+            const camX = ((lms[i].x * vW) - sx) * (cW / sW);
+            pts.push({ x: cW - camX, y: ((lms[i].y * vH) - sy) * (cH / sH) });
+          }
+          userHands.push(pts);
+        }
+      }
+
+      let matchedUserHands = [];
+      let availableHands = [...userHands];
+      for (let tHand of targetPoses) {
+        let bestIdx = -1, minDist = Infinity;
+        for (let i = 0; i < availableHands.length; i++) {
+          const dist = Math.hypot(tHand[0].x - availableHands[i][0].x, tHand[0].y - availableHands[i][0].y);
+          if (dist < minDist) { minDist = dist; bestIdx = i; }
+        }
+        if (bestIdx !== -1) { matchedUserHands.push(availableHands[bestIdx]); availableHands.splice(bestIdx, 1); }
+        else { matchedUserHands.push(null); }
+      }
+
+      let matchCount = 0;
+      targetPoses.forEach((tHand, hIdx) => {
+        const uHand = matchedUserHands[hIdx];
+        CONNECTIONS.forEach(conn => {
+          const [a, b] = conn;
+          const tA = tHand[a], tB = tHand[b];
+          mCtx.beginPath(); mCtx.moveTo(tA.x, tA.y); mCtx.lineTo(tB.x, tB.y);
+          mCtx.lineWidth = 3;
+          if (uHand) {
+            const uA = uHand[a], uB = uHand[b];
+            if (Math.hypot(uA.x-tA.x, uA.y-tA.y) < config.threshold && Math.hypot(uB.x-tB.x, uB.y-tB.y) < config.threshold) mCtx.strokeStyle = "#0f0";
+            else mCtx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+          } else { mCtx.strokeStyle = "rgba(255, 255, 255, 0.2)"; }
+          mCtx.stroke();
+        });
+
+        tHand.forEach((tP, i) => {
+          let matched = uHand && Math.hypot(uHand[i].x - tP.x, uHand[i].y - tP.y) < config.threshold;
+          if (matched) matchCount++;
+          mCtx.beginPath(); mCtx.arc(tP.x, tP.y, 6, 0, Math.PI * 2);
+          mCtx.fillStyle = matched ? "#0f0" : "rgba(255, 255, 255, 0.3)"; mCtx.fill();
+        });
+      });
+
+      if (matchCount >= config.reqMatch) {
+        if (matchStartTime === 0) matchStartTime = Date.now();
+        const elapsed = Date.now() - matchStartTime;
+        const progress = Math.min(elapsed / HOLD_DURATION, 1);
+        statusTxt.innerText = `HOLDING... ${Math.round(progress * 100)}%`;
+        mCtx.fillStyle = "rgba(0, 255, 0, 0.2)";
+        mCtx.fillRect(0, cH * (1-progress), cW, cH * progress);
+        if (elapsed >= HOLD_DURATION) {
+          isTransitioning = true; matchStartTime = 0;
+          statusTxt.innerText = "ACCESS GRANTED";
+          setTimeout(() => { currentStage++; isTransitioning = false; if (currentStage <= 3) updateHeaderUI(); }, 1000);
+        }
+      } else { matchStartTime = 0; statusTxt.innerText = `MATCHING: ${matchCount}/${config.reqMatch}`; }
+    });
+
+    const camera = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 640, height: 480 });
+    camera.start().then(init);
+    window.addEventListener('resize', init);
+  </script>
+</body>
+</html>

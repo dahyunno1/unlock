@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Lock - Swipe (Retro UI Upgrade)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    :root { 
+      --accent: #0f0; 
+      --bg-side: #0033DA;
+      --bg-center: #000;
+    }
+
+    body { 
+      margin: 0; 
+      height: 100vh; 
+      display: flex; 
+      font-family: 'Share Tech Mono', monospace; 
+      overflow: hidden; 
+      background: var(--bg-side);
+      color: white;
+    }
+
+    #left-pane, #right-pane { flex: 1; position: relative; }
+
+    /* 좌측 UI 디자인 */
+    .phone-icon {
+      position: absolute; top: 50px; left: 50px;
+      width: 60px; height: 120px; background: #f0f0f0;
+      border: 6px solid #222; border-radius: 12px;
+      transform: rotate(-15deg); box-shadow: -15px 15px 0px rgba(0,0,0,0.2);
+    }
+    .phone-icon::before {
+      content: ''; position: absolute; top: 10px; left: 4px; right: 4px; bottom: 10px;
+      background: #fff; border-radius: 4px;
+    }
+    .phone-icon::after {
+      content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+      width: 20px; height: 5px; background: #222;
+    }
+
+    .left-info {
+      position: absolute;
+      top: 300px;
+      left: 50px;
+      font-size: 16px;
+      font-family: "Gothic A1", sans-serif;
+      letter-spacing: 1px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+
+    .brand-logo {
+      position: absolute; bottom: 40px; font-family: sans-serif;
+      font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .left-logo { left: 50px; }
+    .right-logo { right: 50px; }
+
+    .logo-img {
+    width: 160px;     /* 크기 조절 */
+    height: auto;
+    display: block;
+    }
+
+    .left-back-btn {
+        position: absolute;
+        bottom: 40px;
+        left: 50px;
+
+        background: none;
+        border: 2px solid white;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+
+        font-family: "Geo", sans-serif;
+        font-weight: 400;
+        font-size: 16pt;
+
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none; /* a태그 밑줄 제거 */
+    }
+
+    .left-back-btn:hover {
+      background-color: white;
+      color: #0033DA;
+    }
+
+    .chain-bg {
+      position: absolute; top: -20px; right: -80px; width: 100%; height: 30px;
+      background-image: url("chain_white.svg"); transform: rotate(20deg);
+    }
+
+    /* 가운데 프레임 UI */
+    #center-pane { flex: 1.4; padding: 40px 0; box-sizing: border-box; display: flex; }
+    .center-wrapper {
+      flex: 1; background: var(--bg-center);
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0px 20px 50px rgba(0,0,0,0.8);
+      border: 1px solid #0f0;
+    }
+
+    /* [수정된 헤더 스타일] 지문 인식 UI와 통일 */
+    #header { 
+      background: #000; 
+      display: flex; 
+      align-items: flex-start; 
+      justify-content: space-between; 
+      padding: 20px;
+      border-bottom: 2px solid #222;
+      z-index: 10; 
+    }
+
+    .header-level { font-size: 20px; width: 120px; color: var(--accent); }
+    .header-center { flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .header-title { font-size: 20px; text-align: center; letter-spacing: 1px; }
+    #mission-canvas { background: #111; border: 1px solid #333; }
+
+    .header-progress-wrap { width: 100px; display: flex; justify-content: flex-end; align-items: center; padding-top: 5px; }
+    .progress-bar { display: flex; align-items: center; }
+    .p-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    .p-dot.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .p-line { width: 15px; height: 2px; background: #444; }
+
+    #viewport { flex: 1; position: relative; }
+    #main-canvas { width: 100%; height: 100%; display: block; }
+    #footer { 
+      background: rgba(0, 0, 0, 0.9); 
+      padding: 15px;
+      text-align: center;
+      color: var(--accent); 
+      font-size: 16px; 
+      letter-spacing: 2px;
+      border-top: 1px solid #222;
+    }
+    /* 흔들림 */
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  8%   { transform: translateX(-14px); }
+  16%  { transform: translateX(14px); }
+  24%  { transform: translateX(-10px); }
+  32%  { transform: translateX(10px); }
+  40%  { transform: translateX(-6px); }
+  48%  { transform: translateX(6px); }
+  56%  { transform: translateX(-3px); }
+  64%  { transform: translateX(3px); }
+  72%  { transform: translateX(-1px); }
+  80%  { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+/* 빨간 테두리 펄스 */
+@keyframes borderPulse {
+  0%   { box-shadow: 0 0 0px 0px rgba(255,0,0,0); border-color: #0f0; }
+  10%  { box-shadow: 0 0 30px 10px rgba(255,0,0,0.8); border-color: #f00; }
+  30%  { box-shadow: 0 0 60px 20px rgba(255,0,0,0.5); border-color: #f00; }
+  70%  { box-shadow: 0 0 20px 5px rgba(255,0,0,0.3); border-color: #f00; }
+  100% { box-shadow: 0 0 0px 0px rgba(255,0,0,0); border-color: #0f0; }
+}
+
+/* 빨간 플래시 */
+@keyframes flashOverlay {
+  0%   { opacity: 0; }
+  10%  { opacity: 0.35; }
+  30%  { opacity: 0.15; }
+  60%  { opacity: 0.05; }
+  100% { opacity: 0; }
+}
+
+/* 스캔라인 글리치 */
+@keyframes scanNoise {
+  0%   { background-position: 0 0; opacity: 0; }
+  5%   { opacity: 0.15; }
+  50%  { background-position: 0 -200px; opacity: 0.1; }
+  100% { background-position: 0 -400px; opacity: 0; }
+}
+
+.center-wrapper.fail-shake {
+  animation: shake 0.6s ease-out, borderPulse 1.5s ease-out;
+}
+
+#fail-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 0, 0, 0.0);
+  pointer-events: none;
+  z-index: 20;
+  mix-blend-mode: screen;
+}
+#fail-overlay.active {
+  animation: flashOverlay 1.5s ease-out forwards;
+}
+
+#glitch-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 21;
+  opacity: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(255,0,0,0.04) 3px, rgba(255,0,0,0.04) 4px
+  );
+}
+#glitch-overlay.active {
+  animation: scanNoise 1.5s ease-out forwards;
+}
+
+@keyframes warnBlink {
+  0%, 100% { opacity: 1; color: red; }
+  50%       { opacity: 0.3; color: #ff6666; }
+}
+#status-txt.fail-blink {
+  animation: warnBlink 0.25s ease-in-out 6;
+}
+
+#reset-warning {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  font-size: 18px;
+  color: #f00;
+  letter-spacing: 3px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  text-shadow: 0 0 20px #f00, 0 0 40px #f00;
+}
+@keyframes warningAppear {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  80%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+#reset-warning.active {
+  animation: warningAppear 1.5s ease forwards;
+}
+
+    video { display: none; }
+  </style>
+</head>
+
+<body>
+
+<div id="left-pane">
+  <div class="phone-icon"></div>
+  <div class="left-info">
+    <div style="color: #0f0; font-family: 'Geo', sans-serif; font-size: 20pt;">Swipe to Unlock</div><br>
+    지시하는 대로 스와이프하여<br>
+    잠금해제를 시도하세요!<br>
+    가장 쉬운 잠금방식들 중 하나인<br>
+    '밀어서 잠금해제'입니다.
+  </div>
+  <a href="index.html" class="left-back-btn">← BACK</a>
+</div>
+
+<div id="center-pane">
+  <div class="center-wrapper" id="center-wrapper">
+    <div id="fail-overlay"></div>
+  <div id="glitch-overlay"></div>
+  <div id="reset-warning">⚠ ACCESS DENIED<br><span style="font-size:13px; letter-spacing:2px;">RESETTING TO LEVEL 1</span></div>
+    <div id="header">
+        <div class="header-level" id="level-txt">Level 1</div>
+        <div class="header-center">
+            <div class="header-title" id="stage-title">MISSION: SWIPE</div>
+            <div style="font-size: 12px; color: #666;">밀어서 잠금해제!</div>
+        </div>
+        <div class="header-progress-wrap">
+          <div class="progress-bar">
+            <div class="p-dot" id="dot-1"></div>
+            <div class="p-line"></div>
+            <div class="p-dot" id="dot-2"></div>
+            <div class="p-line"></div>
+            <div class="p-dot" id="dot-3"></div>
+          </div>
+        </div>
+    </div>
+      
+    <div id="viewport">
+      <canvas id="main-canvas"></canvas>
+    </div>
+    <div id="footer">STATUS: <span id="status-txt">READY</span></div>
+  </div>
+</div>
+
+<div id="right-pane">
+    <div class="chain-bg"></div>
+    <div class="brand-logo right-logo">
+        <img src="logo_white.svg" class="logo-img">
+    </div>
+</div>
+
+<video id="video" playsinline></video>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<script>
+    const mCanvas = document.getElementById('main-canvas');
+    const mCtx = mCanvas.getContext('2d');
+    const video = document.getElementById('video');
+    const statusTxt = document.getElementById('status-txt');
+    const levelTxt = document.getElementById('level-txt');
+    const headerTitle = document.getElementById('stage-title');
+    const centerWrapper = document.getElementById('center-wrapper');
+    const failOverlay = document.getElementById('fail-overlay');
+    const glitchOverlay = document.getElementById('glitch-overlay');
+    const resetWarning = document.getElementById('reset-warning');
+
+    const LEVEL_CONFIGS = [
+      { level: 1, trackWidth: 70, time: 20 },
+      { level: 2, trackWidth: 55, time: 25 },
+      { level: 3, trackWidth: 40, time: 30 }
+    ];
+
+    let currentLevel = 1;
+    let sliderProgress = 0;
+    let isDragging = false;
+    let isGameOver = false;
+    let timeLeft = 0;
+    let globalTimer = null;
+    let pathData = null;
+
+    function init() {
+      mCanvas.width = mCanvas.clientWidth;
+      mCanvas.height = mCanvas.clientHeight;
+      startGame();
+    }
+
+    function triggerFailEffect() {
+  centerWrapper.classList.remove('fail-shake');
+  void centerWrapper.offsetWidth;
+  centerWrapper.classList.add('fail-shake');
+
+  failOverlay.classList.remove('active');
+  void failOverlay.offsetWidth;
+  failOverlay.classList.add('active');
+
+  glitchOverlay.classList.remove('active');
+  void glitchOverlay.offsetWidth;
+  glitchOverlay.classList.add('active');
+
+  statusTxt.classList.remove('fail-blink');
+  void statusTxt.offsetWidth;
+  statusTxt.classList.add('fail-blink');
+
+  resetWarning.classList.remove('active');
+  void resetWarning.offsetWidth;
+  resetWarning.classList.add('active');
+
+  setTimeout(() => {
+    centerWrapper.classList.remove('fail-shake');
+    failOverlay.classList.remove('active');
+    glitchOverlay.classList.remove('active');
+    statusTxt.classList.remove('fail-blink');
+    resetWarning.classList.remove('active');
+  }, 1600);
+}
+
+    function getLevelPoints(level, cW, cH) {
+    if (level === 1) return [ {x: cW*0.15, y: cH*0.75}, {x: cW*0.85, y: cH*0.75} ];
+    if (level === 2) return [{x: cW*0.2, y: cH*0.3}, {x: cW*0.8, y: cH*0.3}, {x: cW*0.2, y: cH*0.7}, {x: cW*0.8, y: cH*0.7}];
+    if (level === 3) {
+        // 3단계: 시간에 따라 중간 꼭짓점들이 꿀렁꿀렁 움직임!
+        const t = Date.now() / 600; // 숫자가 작을수록 빠름
+        return [
+        {x: cW*0.1, y: cH*0.5}, // 시작점 (고정)
+        {x: cW*0.3 + Math.sin(t) * 40, y: cH*0.2 + Math.cos(t) * 50}, // 움직이는 점 1
+        {x: cW*0.5 + Math.cos(t * 1.2) * 60, y: cH*0.8 + Math.sin(t * 0.8) * 40}, // 움직이는 점 2
+        {x: cW*0.7 + Math.sin(t * 0.9) * 40, y: cH*0.3 + Math.cos(t * 1.1) * 50}, // 움직이는 점 3
+        {x: cW*0.9, y: cH*0.5}  // 끝점 (고정)
+        ];
+    }
+    }
+
+    function calculatePathData(points) {
+      let totalLen = 0;
+      const segments = [];
+      for (let i = 0; i < points.length - 1; i++) {
+        const dx = points[i+1].x - points[i].x;
+        const dy = points[i+1].y - points[i].y;
+        const len = Math.hypot(dx, dy);
+        segments.push({ start: points[i], end: points[i+1], len: len, accumLen: totalLen });
+        totalLen += len;
+      }
+      return { points, segments, totalLen };
+    }
+
+    function getKnobPosition(pData, progress) {
+      const targetLen = pData.totalLen * progress;
+      if (targetLen <= 0) return pData.points[0];
+      if (targetLen >= pData.totalLen) return pData.points[pData.points.length - 1];
+      for (let seg of pData.segments) {
+        if (targetLen >= seg.accumLen && targetLen <= seg.accumLen + seg.len) {
+          const t = (targetLen - seg.accumLen) / seg.len;
+          return { x: seg.start.x + t * (seg.end.x - seg.start.x), y: seg.start.y + t * (seg.end.y - seg.start.y) };
+        }
+      }
+      return pData.points[pData.points.length - 1];
+    }
+
+    // [레벨 UI 업데이트 함수]
+    function updateHeaderUI() {
+      levelTxt.innerText = "Level " + currentLevel;
+      headerTitle.innerText = "MISSION: SWIPE STAGE " + currentLevel;
+      
+      // 도트 활성화 로직
+      document.getElementById('dot-1').className = currentLevel >= 1 ? "p-dot active" : "p-dot";
+      document.getElementById('dot-2').className = currentLevel >= 2 ? "p-dot active" : "p-dot";
+      document.getElementById('dot-3').className = currentLevel >= 3 ? "p-dot active" : "p-dot";
+    }
+
+    function startGame() {
+      const config = LEVEL_CONFIGS[currentLevel - 1];
+      sliderProgress = 0;
+      isDragging = false;
+      isGameOver = false;
+      timeLeft = config.time;
+      
+      updateHeaderUI();
+      
+      statusTxt.innerText = `남은 시간 ${timeLeft}s`;
+      statusTxt.style.color = "#fff";
+      
+      pathData = calculatePathData(getLevelPoints(currentLevel, mCanvas.width, mCanvas.height));
+
+      if (globalTimer) clearInterval(globalTimer);
+      globalTimer = setInterval(() => {
+        if (isGameOver) return;
+        timeLeft--;
+        statusTxt.innerText = isDragging ? "DRAGGING..." : `남은 시간 ${timeLeft}s`;
+        if (timeLeft <= 5 && !isDragging) statusTxt.style.color = "#f00";
+        
+        // 🔴 [수정] 타이머가 0이 되면 실패 처리
+        if (timeLeft <= 0) triggerFailure("TIME OVER!"); 
+      }, 1000);
+    }
+
+    function showMessageAndRestart(msg, color, delay, isNextLevel) {
+      isGameOver = true;
+      isDragging = false;
+      clearInterval(globalTimer);
+      statusTxt.innerText = msg;
+      statusTxt.style.color = color;
+      
+      setTimeout(() => {
+        if (isNextLevel) currentLevel++;
+        if (currentLevel > 3) {
+           headerTitle.innerText = "SYSTEM UNLOCKED";
+           statusTxt.innerText = "ACCESS GRANTED.";
+           statusTxt.style.color = "#0f0";
+           mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height); 
+        } else {
+           startGame();
+        }
+      }, delay);
+    }
+
+    function triggerFailure(msg) {
+      isGameOver = true;
+      isDragging = false;
+      clearInterval(globalTimer);
+      triggerFailEffect(); 
+      // 빨간색 경고 메시지 출력
+      statusTxt.innerText = msg + " RESET TO LEVEL 1!";
+      statusTxt.style.color = "#f00"; 
+
+      // 2초 뒤에 레벨을 1로 초기화하고 게임 재시작
+      setTimeout(() => {
+        currentLevel = 1; 
+        startGame();
+      }, 2000);
+    }
+
+    function drawTrack(ctx) {
+      if (!pathData) return null;
+      const config = LEVEL_CONFIGS[currentLevel - 1];
+      
+      ctx.beginPath();
+      ctx.moveTo(pathData.points[0].x, pathData.points[0].y);
+      for (let i = 1; i < pathData.points.length; i++) ctx.lineTo(pathData.points[i].x, pathData.points[i].y);
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.lineWidth = config.trackWidth;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.stroke();
+
+      ctx.lineWidth = config.trackWidth - 4;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.stroke();
+
+      if (sliderProgress > 0) {
+        const targetLen = pathData.totalLen * sliderProgress;
+        let currentLen = 0;
+        ctx.beginPath();
+        ctx.moveTo(pathData.points[0].x, pathData.points[0].y);
+        for (let seg of pathData.segments) {
+          if (currentLen + seg.len >= targetLen) {
+            const t = (targetLen - currentLen) / seg.len;
+            ctx.lineTo(seg.start.x + t * (seg.end.x - seg.start.x), seg.start.y + t * (seg.end.y - seg.start.y));
+            break;
+          } else { ctx.lineTo(seg.end.x, seg.end.y); currentLen += seg.len; }
+        }
+        ctx.lineWidth = config.trackWidth - 4;
+        ctx.strokeStyle = "rgba(118, 255, 84, 0.6)";
+        ctx.stroke();
+      }
+
+      const knobPos = getKnobPosition(pathData, sliderProgress);
+      const knobRadius = (config.trackWidth / 2) - 2;
+      ctx.beginPath();
+      ctx.arc(knobPos.x, knobPos.y, knobRadius, 0, Math.PI * 2);
+      ctx.fillStyle = sliderProgress >= 0.98 ? "#0f0" : "#fff";
+      ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "#333"; ctx.stroke();
+      return { knob: knobPos, radius: knobRadius };
+    }
+
+    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+
+    hands.onResults((results) => {
+      if (!results.image) return;
+      const vW = results.image.width; const vH = results.image.height;
+      const cW = mCanvas.width; const cH = mCanvas.height;
+      
+      const vRatio = vW / vH; const cRatio = cW / cH;
+      let sW, sH, sx, sy;
+      if (vRatio > cRatio) { sH = vH; sW = vH * cRatio; sx = (vW - sW) / 2; sy = 0; }
+      else { sW = vW; sH = vW / cRatio; sx = 0; sy = (vH - sH) / 2; }
+      
+      mCtx.save();
+      mCtx.clearRect(0, 0, cW, cH);
+      mCtx.translate(cW, 0); mCtx.scale(-1, 1);
+      mCtx.globalAlpha = 0.5;
+      mCtx.drawImage(results.image, sx, sy, sW, sH, 0, 0, cW, cH);
+      mCtx.globalAlpha = 1.0;
+      mCtx.restore(); 
+
+    mCtx.restore(); 
+
+    if (currentLevel > 3) return;
+
+    // 💡 3단계일 경우, 매 프레임마다 변동하는 궤적 데이터를 업데이트해줍니다.
+    if (currentLevel === 3 && !isGameOver) {
+    pathData = calculatePathData(getLevelPoints(3, cW, cH));
+    }
+
+    if (!pathData) return;
+    const trackInfo = drawTrack(mCtx);
+    const config = LEVEL_CONFIGS[currentLevel - 1];
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const tip = results.multiHandLandmarks[0][8]; 
+        const camX = ((tip.x * vW) - sx) * (cW / sW);
+        const realX = cW - camX; 
+        const realY = ((tip.y * vH) - sy) * (cH / sH);
+
+        if (!isGameOver) {
+          if (!isDragging && sliderProgress < 0.1) {
+            if (Math.hypot(trackInfo.knob.x - realX, trackInfo.knob.y - realY) < trackInfo.radius + 20) isDragging = true;
+          }
+          if (isDragging) {
+            let bestDistSq = Infinity, bestProgress = sliderProgress;
+            for (let seg of pathData.segments) {
+              const ab = { x: seg.end.x - seg.start.x, y: seg.end.y - seg.start.y };
+              const ap = { x: realX - seg.start.x, y: realY - seg.start.y };
+              let t = Math.max(0, Math.min(1, (ap.x * ab.x + ap.y * ab.y) / (seg.len * seg.len)));
+              const px = seg.start.x + t * ab.x, py = seg.start.y + t * ab.y;
+              const dSq = (realX - px)**2 + (realY - py)**2;
+              if (dSq < bestDistSq) { bestDistSq = dSq; bestProgress = (seg.accumLen + t * seg.len) / pathData.totalLen; }
+            }
+            // 🔴 [수정] 궤도 이탈 시 즉시 실패 함수 호출
+            if (Math.sqrt(bestDistSq) > config.trackWidth / 2 + 10 || bestProgress > sliderProgress + 0.15) {
+              triggerFailure("경로를 벗어났습니다!");
+            } else {
+              sliderProgress = Math.max(0, bestProgress);
+              if (sliderProgress >= 0.98) showMessageAndRestart(`LEVEL ${currentLevel} CLEARED!`, "#0f0", 2000, true);
+            }}
+        }
+        mCtx.beginPath(); mCtx.arc(realX, realY, 8, 0, Math.PI * 2);
+        mCtx.fillStyle = "#fff"; mCtx.fill();
+        mCtx.lineWidth = 3; mCtx.strokeStyle = isDragging ? "#0f0" : "#f00"; mCtx.stroke();
+      }
+    });
+
+    const camera = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 640, height: 480 });
+    camera.start().then(init);
+    
+    window.addEventListener('resize', () => {
+      mCanvas.width = mCanvas.clientWidth; mCanvas.height = mCanvas.clientHeight;
+      if(currentLevel <= 3) pathData = calculatePathData(getLevelPoints(currentLevel, mCanvas.width, mCanvas.height));
+    });
+</script>
+</body>
+</html>
