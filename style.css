@@ -75,7 +75,7 @@ body {
     border-radius: 20px;
     font-family: "Geo", sans-serif;
     font-weight: 400;
-    font-size: 16pt;
+    font-size: 20pt;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -98,10 +98,10 @@ body {
 /* === [수정됨] 기존 footer-text를 화면 왼쪽 중간에 고정 === */
 .footer-text {
     position: fixed;
-    bottom: 180px; /* 아래 추가될 작은 글씨들과 겹치지 않게 높이 띄움 */
+    bottom: 200px; /* 아래 추가될 작은 글씨들과 겹치지 않게 높이 띄움 */
     left: 3%;
     color: #0033cc;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     line-height: 1.6;
     font-family: "Gothic A1", sans-serif;
     pointer-events: none; /* 클릭 방해 금지 */
@@ -128,11 +128,11 @@ body {
 }
 
 .text-bottom-left {
-    bottom: 60px;
+    bottom: 80px;
     left: 3%;
     display: flexå;
     gap: 30px;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     line-height: 1.4;
 }
 
@@ -141,9 +141,9 @@ body {
 }
 
 .text-bottom-edge {
-    bottom: 18px;
+    bottom: 24px;
     left: 3%;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     white-space: nowrap;
 }
 
